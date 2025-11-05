@@ -10,9 +10,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	"github.com/isdmx/watchdog/internal/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+
+	"github.com/isdmx/watchdog/internal/config"
 )
 
 // KubernetesInterface abstracts the Kubernetes client for testing

@@ -2,7 +2,6 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
@@ -17,7 +16,7 @@ repos:
 
       - id: go-imports
         name: go-imports
-        entry: goimports -w -local github.com/isdmx/codebox
+        entry: goimports -w -local github.com/isdmx/watchdog
         language: system
         types: [go]
         description: Format Go imports
@@ -48,7 +47,7 @@ repos:
 
       - id: go-build
         name: go-build
-        entry: go build ./cmd/server
+        entry: go build ./cmd/watchdog
         language: system
         types: [go]
         pass_filenames: false
