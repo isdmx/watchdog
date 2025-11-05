@@ -174,7 +174,7 @@ jobs:
 
   notify:
     runs-on: ubuntu-latest
-    needs: [test, lint, format, build, coverage, security]
+    needs: [test, lint, format, build, coverage]
     if: always()
     steps:
       - name: Check workflow status
