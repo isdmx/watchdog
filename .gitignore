@@ -65,3 +65,5 @@ test-results/
 test_data/
 
 /watchdog
+
+/config/config.yaml
