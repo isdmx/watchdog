@@ -3,7 +3,6 @@ package client
 import (
 	"path/filepath"
 
-	"go.uber.org/fx"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -34,6 +33,3 @@ func NewKubernetesClient() (kubernetes.Interface, error) {
 
 	return clientset, nil
 }
-
-// KubernetesModule provides the Kubernetes client as a dependency
-var KubernetesModule = fx.Options()
