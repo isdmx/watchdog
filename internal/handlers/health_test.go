@@ -58,3 +58,39 @@ func TestHealthHandler(t *testing.T) {
 		assert.Contains(t, w.Header().Get("Content-Type"), "text/plain")
 	})
 }
+
+func TestRegisterHealthRoutes(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	defer func() {
+		_ = logger.Sync()
+	}()
+
+	healthHandler := NewHealthHandler(logger.Sugar())
+	mux := http.NewServeMux()
+
+	// Test that the function doesn't panic and registers routes
+	RegisterHealthRoutes(healthHandler, mux)
+
+	// Verify the routes were registered by checking that requests don't return 404
+	testCases := []struct {
+		path string
+	}{
+		{"/healthz"},
+		{"/readyz"},
+		{"/metrics"},
+	}
+
+	for _, tc := range testCases {
+		t.Run("route_"+tc.path, func(t *testing.T) {
+			req := httptest.NewRequest("GET", tc.path, http.NoBody)
+			w := httptest.NewRecorder()
+
+			mux.ServeHTTP(w, req)
+
+			// Check that it's not a 404 (route was registered)
+			if w.Code == http.StatusNotFound {
+				t.Errorf("Route %s was not registered, got 404", tc.path)
+			}
+		})
+	}
+}
