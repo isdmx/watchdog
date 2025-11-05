@@ -1,0 +1,157 @@
+package monitoring
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	"github.com/isdmx/watchdog/config"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// KubernetesInterface abstracts the Kubernetes client for testing
+type KubernetesInterface interface {
+	CoreV1() corev1client.CoreV1Interface
+}
+
+// PodMonitor handles pod monitoring and cleanup operations
+type PodMonitor struct {
+	clientset    KubernetesInterface
+	config       *config.Config
+	logger       *zap.SugaredLogger
+	stopChannel  chan struct{}
+}
+
+// NewPodMonitor creates a new pod monitor
+func NewPodMonitor(clientset kubernetes.Interface, cfg *config.Config, logger *zap.SugaredLogger) *PodMonitor {
+	return &PodMonitor{
+		clientset:   clientset,
+		config:      cfg,
+		logger:      logger,
+		stopChannel: make(chan struct{}),
+	}
+}
+
+// MonitorAndCleanup performs the monitoring and cleanup operation
+func (pm *PodMonitor) MonitorAndCleanup() error {
+	pm.logger.Info("Starting pod monitoring and cleanup")
+	
+	startTime := time.Now()
+	defer func() {
+		duration := time.Since(startTime)
+		MonitoringDuration.Observe(duration.Seconds())
+		pm.logger.Debugf("Monitoring completed in %v", duration)
+	}()
+
+	// Create label selector from config
+	labelSelector := buildLabelSelector(pm.config.Watchdog.LabelSelectors)
+
+	for _, namespace := range pm.config.Watchdog.Namespaces {
+		pm.logger.Debugf("Processing namespace: %s", namespace)
+		
+		// List pods in the namespace with the specified labels
+		pods, err := pm.clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+			LabelSelector: labelSelector,
+		})
+		if err != nil {
+			pm.logger.Error("Failed to list pods", "namespace", namespace, "error", err)
+			continue
+		}
+
+		pm.logger.Debugf("Found %d pods in namespace %s with matching labels", len(pods.Items), namespace)
+		PodsExaminedTotal.Add(float64(len(pods.Items)))
+
+		// Filter and terminate old pods
+		for _, pod := range pods.Items {
+			age := time.Since(pod.CreationTimestamp.Time)
+			
+			pm.logger.Debugf("Pod %s age: %v, max age: %v", pod.Name, age, pm.config.Watchdog.MaxPodLifetime)
+
+			// Check if the pod exceeds the maximum lifetime
+			if age > pm.config.Watchdog.MaxPodLifetime {
+				pm.logger.Info("Pod exceeds maximum lifetime", 
+					"pod", pod.Name, 
+					"namespace", namespace, 
+					"age", age,
+					"maxAge", pm.config.Watchdog.MaxPodLifetime)
+
+				if pm.config.Watchdog.DryRun {
+					pm.logger.Info("DRY RUN: Would terminate pod", "pod", pod.Name, "namespace", namespace)
+					PodsTerminatedTotal.WithLabelValues(namespace, "true").Inc()
+				} else {
+					// Terminate the pod
+					err := pm.terminatePod(namespace, pod.Name)
+					if err != nil {
+						pm.logger.Error("Failed to terminate pod", "pod", pod.Name, "namespace", namespace, "error", err)
+					} else {
+						pm.logger.Info("Successfully terminated pod", "pod", pod.Name, "namespace", namespace)
+						PodsTerminatedTotal.WithLabelValues(namespace, "false").Inc()
+						PodsTerminatedByAgeTotal.WithLabelValues(namespace).Inc()
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// buildLabelSelector creates a label selector string from a map
+func buildLabelSelector(labels map[string]string) string {
+	var selectorParts []string
+	for key, value := range labels {
+		selectorParts = append(selectorParts, fmt.Sprintf("%s=%s", key, value))
+	}
+	return strings.Join(selectorParts, ",")
+}
+
+// terminatePod terminates a pod in the specified namespace
+func (pm *PodMonitor) terminatePod(namespace, podName string) error {
+	err := pm.clientset.CoreV1().Pods(namespace).Delete(context.TODO(), podName, metav1.DeleteOptions{})
+	return err
+}
+
+// MonitoringModule provides the monitoring functionality as a dependency
+var MonitoringModule = fx.Options(
+	fx.Provide(NewPodMonitor),
+)
+
+// StartMonitoring starts the monitoring process
+func StartMonitoring(pm *PodMonitor, cfg *config.Config, logger *zap.SugaredLogger) {
+	logger.Info("Starting periodic monitoring", "interval", cfg.Watchdog.ScheduleInterval)
+
+	// Run once immediately
+	err := pm.MonitorAndCleanup()
+	if err != nil {
+		logger.Error("Initial monitoring run failed", "error", err)
+	}
+
+	// Start periodic monitoring
+	ticker := time.NewTicker(cfg.Watchdog.ScheduleInterval)
+
+	for {
+		select {
+		case <-ticker.C:
+			logger.Info("Starting scheduled monitoring check")
+			err := pm.MonitorAndCleanup()
+			if err != nil {
+				logger.Error("Scheduled monitoring run failed", "error", err)
+			}
+		case <-pm.stopChannel:
+			logger.Info("Stopping monitoring")
+			ticker.Stop()
+			return
+		}
+	}
+}
+
+// Stop stops the monitoring process
+func (pm *PodMonitor) Stop() {
+	close(pm.stopChannel)
+}

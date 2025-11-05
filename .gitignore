@@ -1,0 +1,70 @@
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go build/cache
+*.gox
+*.test
+*.prof
+*.out
+go-build*/
+go.sum
+!go.sum
+
+# Coverage
+coverage.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+tmp/
+temp/
+
+# Environment specific
+.env
+.config
+.kube/
+
+# Docker
+.dockerignore
+.docker/
+
+# Kubernetes
+*.yaml
+!k8s/
+!*.yaml  # Don't ignore the yaml files in the main directory that are part of the project
+
+# Local config files (but not the template config.yaml)
+config-local.yaml
+config.*.yaml
+!config.yaml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Tools
+tools/tools.go  # If you have tools for go generate
+
+# Local test data
+test-results/
+test_data/
+
+/watchdog

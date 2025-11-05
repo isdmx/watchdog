@@ -1,0 +1,14 @@
+watchdog:
+  namespaces:
+    - "default"
+    - "production"
+  labelSelectors:
+    app: "temporary"
+    cleanup: "true"
+  scheduleInterval: "5m"
+  maxPodLifetime: "1h"
+  dryRun: true  # Set to true for testing
+
+logging:
+  mode: "development"
+  level: "debug"
