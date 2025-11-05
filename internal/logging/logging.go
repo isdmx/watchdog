@@ -1,13 +1,14 @@
-package config
+package logging
 
 import (
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/isdmx/watchdog/internal/config"
 )
 
 // NewLogger creates a new zap logger based on the configuration
-func NewLogger(cfg *Config) (*zap.Logger, error) {
+func NewLogger(cfg *config.Config) (*zap.Logger, error) {
 	var loggerConfig zap.Config
 
 	if cfg.Logging.Mode == "development" {
@@ -36,9 +37,3 @@ func NewLogger(cfg *Config) (*zap.Logger, error) {
 func NewSugaredLogger(logger *zap.Logger) *zap.SugaredLogger {
 	return logger.Sugar()
 }
-
-// LoggingModule provides the logging as a dependency
-var LoggingModule = fx.Options(
-	fx.Provide(NewLogger),
-	fx.Provide(NewSugaredLogger),
-)

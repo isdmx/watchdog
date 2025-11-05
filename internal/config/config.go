@@ -4,13 +4,20 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"go.uber.org/fx"
 )
 
 // Config holds the application configuration
 type Config struct {
 	Watchdog WatchdogConfig `mapstructure:"watchdog"`
 	Logging  LoggingConfig  `mapstructure:"logging"`
+	Http     HttpConfig     `mapstructure:"http"`
+}
+
+// HealthConfig holds the healthcheck-specific configuration
+type HttpConfig struct {
+	Addr         string        `mapstructure:"addr"`
+	ReadTimeout  time.Duration `mapstructure:"readTimeout"`
+	WriteTimeout time.Duration `mapstructure:"writeTimeout"`
 }
 
 // WatchdogConfig holds the watchdog-specific configuration
@@ -28,19 +35,33 @@ type LoggingConfig struct {
 	Level string `mapstructure:"level"`
 }
 
+const (
+	defaultHttpAddr         = ":8080"
+	defaultReadTimeout      = 5 * time.Second
+	defaultWriteTimeout     = 10 * time.Second
+	defaultScheduleInterval = 10 * time.Minute
+	defaultMaxPodLifetime   = 1 * time.Hour
+	defaultDryRun           = false
+	defaultLogLevel         = "info"
+	defaultLogMode          = "production"
+)
+
 // NewConfig loads the configuration from the config file
 func NewConfig() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("configs")
+	viper.AddConfigPath("config")
 
 	// Set default values
-	viper.SetDefault("watchdog.scheduleInterval", "10m")
-	viper.SetDefault("watchdog.maxPodLifetime", "24h")
-	viper.SetDefault("watchdog.dryRun", false)
-	viper.SetDefault("logging.mode", "production")
-	viper.SetDefault("logging.level", "info")
+	viper.SetDefault("http.addr", defaultHttpAddr)
+	viper.SetDefault("http.readTimeout", defaultReadTimeout)
+	viper.SetDefault("http.writeTimeout", defaultWriteTimeout)
+	viper.SetDefault("watchdog.scheduleInterval", defaultScheduleInterval)
+	viper.SetDefault("watchdog.maxPodLifetime", defaultMaxPodLifetime)
+	viper.SetDefault("watchdog.dryRun", defaultDryRun)
+	viper.SetDefault("logging.mode", defaultLogMode)
+	viper.SetDefault("logging.level", defaultLogLevel)
 
 	// Read the config file
 	if err := viper.ReadInConfig(); err != nil {
@@ -53,28 +74,4 @@ func NewConfig() (*Config, error) {
 	}
 
 	return &cfg, nil
-}
-
-// Module provides the configuration as a dependency
-var Module = fx.Options(
-	fx.Provide(NewConfig),
-)
-
-// ProvideConfigForTest provides a config for testing
-func ProvideConfigForTest() *Config {
-	return &Config{
-		Watchdog: WatchdogConfig{
-			Namespaces: []string{"default"},
-			LabelSelectors: map[string]string{
-				"app": "test",
-			},
-			ScheduleInterval: 10 * time.Minute,
-			MaxPodLifetime:   24 * time.Hour,
-			DryRun:           true,
-		},
-		Logging: LoggingConfig{
-			Mode:  "development",
-			Level: "debug",
-		},
-	}
 }

@@ -3,7 +3,7 @@
 # Build the application
 .PHONY: build
 build:
-	go build -o bin/watchdog ./cmd/watchdog
+	go build -o watchdog ./cmd/watchdog
 
 # Run tests
 .PHONY: test

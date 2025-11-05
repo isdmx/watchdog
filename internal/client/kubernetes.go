@@ -1,4 +1,4 @@
-package config
+package client
 
 import (
 	"path/filepath"
@@ -36,6 +36,4 @@ func NewKubernetesClient() (kubernetes.Interface, error) {
 }
 
 // KubernetesModule provides the Kubernetes client as a dependency
-var KubernetesModule = fx.Options(
-	fx.Provide(NewKubernetesClient),
-)
+var KubernetesModule = fx.Options()

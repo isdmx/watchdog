@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 
 	"github.com/isdmx/watchdog/internal/config"
@@ -17,19 +16,17 @@ import (
 
 // PodMonitor handles pod monitoring and cleanup operations
 type PodMonitor struct {
-	clientset   kubernetes.Interface
-	config      *config.Config
-	logger      *zap.SugaredLogger
-	stopChannel chan struct{}
+	clientset kubernetes.Interface
+	config    *config.Config
+	logger    *zap.SugaredLogger
 }
 
 // NewPodMonitor creates a new pod monitor
 func NewPodMonitor(clientset kubernetes.Interface, cfg *config.Config, logger *zap.SugaredLogger) *PodMonitor {
 	return &PodMonitor{
-		clientset:   clientset,
-		config:      cfg,
-		logger:      logger,
-		stopChannel: make(chan struct{}),
+		clientset: clientset,
+		config:    cfg,
+		logger:    logger,
 	}
 }
 
@@ -111,43 +108,4 @@ func buildLabelSelector(labels map[string]string) string {
 func (pm *PodMonitor) terminatePod(namespace, podName string) error {
 	err := pm.clientset.CoreV1().Pods(namespace).Delete(context.TODO(), podName, metav1.DeleteOptions{})
 	return err
-}
-
-// MonitoringModule provides the monitoring functionality as a dependency
-var MonitoringModule = fx.Options(
-	fx.Provide(NewPodMonitor),
-)
-
-// StartMonitoring starts the monitoring process
-func StartMonitoring(pm *PodMonitor, cfg *config.Config, logger *zap.SugaredLogger) {
-	logger.Info("Starting periodic monitoring", "interval", cfg.Watchdog.ScheduleInterval)
-
-	// Run once immediately
-	err := pm.MonitorAndCleanup()
-	if err != nil {
-		logger.Error("Initial monitoring run failed", "error", err)
-	}
-
-	// Start periodic monitoring
-	ticker := time.NewTicker(cfg.Watchdog.ScheduleInterval)
-
-	for {
-		select {
-		case <-ticker.C:
-			logger.Info("Starting scheduled monitoring check")
-			err := pm.MonitorAndCleanup()
-			if err != nil {
-				logger.Error("Scheduled monitoring run failed", "error", err)
-			}
-		case <-pm.stopChannel:
-			logger.Info("Stopping monitoring")
-			ticker.Stop()
-			return
-		}
-	}
-}
-
-// Stop stops the monitoring process
-func (pm *PodMonitor) Stop() {
-	close(pm.stopChannel)
 }
