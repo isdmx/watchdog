@@ -41,25 +41,25 @@ watchdog:
   namespaces:
     - "namespace1"
     - "namespace2"
-  
+
   # Label selector criteria for identifying target pods
   labelSelectors:
     key1: "value1"
     key2: "value2"
-  
+
   # Cleanup scheduling in duration format (e.g., "5m", "1h", "24h")
   scheduleInterval: "10m"
-  
+
   # Maximum pod lifetime before cleanup consideration
   maxPodLifetime: "24h"
-  
+
   # Additional safety settings
   dryRun: false  # If true, only log what would be deleted without taking action
 
 logging:
   # Logging mode: "production" or "development"
   mode: "production"
-  
+
   # Log level using zap logging levels: "debug", "info", "warn", "error", "dpanic", "panic", "fatal"
   level: "info"
 ```

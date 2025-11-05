@@ -6,14 +6,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 func TestHealthHandler(t *testing.T) {
 	// Create logger
 	logger, err := zap.NewDevelopment()
-	assert.NoError(t, err)
-	defer logger.Sync()
+	require.NoError(t, err)
+	defer func() {
+		// Best effort to sync logger
+		_ = logger.Sync()
+	}()
 	sugarLogger := logger.Sugar()
 
 	// Create health handler
@@ -24,7 +28,7 @@ func TestHealthHandler(t *testing.T) {
 	healthHandler.RegisterRoutes(mux)
 
 	t.Run("Healthz endpoint", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/healthz", nil)
+		req := httptest.NewRequest("GET", "/healthz", http.NoBody)
 		w := httptest.NewRecorder()
 
 		mux.ServeHTTP(w, req)
@@ -34,7 +38,7 @@ func TestHealthHandler(t *testing.T) {
 	})
 
 	t.Run("Readyz endpoint", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/readyz", nil)
+		req := httptest.NewRequest("GET", "/readyz", http.NoBody)
 		w := httptest.NewRecorder()
 
 		mux.ServeHTTP(w, req)
@@ -44,7 +48,7 @@ func TestHealthHandler(t *testing.T) {
 	})
 
 	t.Run("Metrics endpoint", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/metrics", nil)
+		req := httptest.NewRequest("GET", "/metrics", http.NoBody)
 		w := httptest.NewRecorder()
 
 		mux.ServeHTTP(w, req)

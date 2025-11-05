@@ -28,7 +28,7 @@ func (h *HealthHandler) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // healthz endpoint - checks if the service is healthy
-func (h *HealthHandler) healthz(w http.ResponseWriter, r *http.Request) {
+func (h *HealthHandler) healthz(w http.ResponseWriter, _ *http.Request) {
 	// In a real implementation, you might check connectivity to external services
 	// For now, we'll just return OK
 	w.WriteHeader(http.StatusOK)
@@ -40,7 +40,7 @@ func (h *HealthHandler) healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 // readyz endpoint - checks if the service is ready to serve requests
-func (h *HealthHandler) readyz(w http.ResponseWriter, r *http.Request) {
+func (h *HealthHandler) readyz(w http.ResponseWriter, _ *http.Request) {
 	// In a real implementation, you might check if other dependencies are ready
 	// For now, we'll just return OK
 	w.WriteHeader(http.StatusOK)
@@ -52,7 +52,7 @@ func (h *HealthHandler) readyz(w http.ResponseWriter, r *http.Request) {
 }
 
 // metrics endpoint - returns Prometheus metrics
-func (h *HealthHandler) metrics(w http.ResponseWriter, r *http.Request) {
+func (*HealthHandler) metrics(w http.ResponseWriter, r *http.Request) {
 	promhttp.Handler().ServeHTTP(w, r)
 }
 

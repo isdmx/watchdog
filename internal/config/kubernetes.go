@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"path/filepath"
 
 	"go.uber.org/fx"
@@ -13,19 +12,16 @@ import (
 
 // NewKubernetesClient creates a new Kubernetes client
 func NewKubernetesClient() (*kubernetes.Clientset, error) {
-	var kubeconfig *string
+	var kubeconfig string
 	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+		kubeconfig = filepath.Join(home, ".kube", "config")
 	}
-	flag.Parse()
 
 	// Try in-cluster config first (for when running inside Kubernetes)
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		// Fall back to kubeconfig file (for local development)
-		config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
+		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
 			return nil, err
 		}

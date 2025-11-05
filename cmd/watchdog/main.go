@@ -11,9 +11,9 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
-	"github.com/isdmx/watchdog/config"
-	"github.com/isdmx/watchdog/handlers"
-	"github.com/isdmx/watchdog/monitoring"
+	"github.com/isdmx/watchdog/internal/config"
+	"github.com/isdmx/watchdog/internal/handlers"
+	"github.com/isdmx/watchdog/internal/monitoring"
 )
 
 func main() {
@@ -41,7 +41,8 @@ func main() {
 	)
 
 	// Start the application
-	startCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	const startupTimeout = 15 * time.Second
+	startCtx, cancel := context.WithTimeout(context.Background(), startupTimeout)
 	defer cancel()
 
 	if err := app.Start(startCtx); err != nil {
@@ -54,7 +55,8 @@ func main() {
 	<-quit
 
 	// Shut down the application gracefully
-	stopCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	const shutdownTimeout = 15 * time.Second
+	stopCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	if err := app.Stop(stopCtx); err != nil {
@@ -68,16 +70,23 @@ func newHTTPServer(healthHandler *handlers.HealthHandler) *http.Server {
 	healthHandler.RegisterRoutes(mux)
 
 	return &http.Server{
-		Addr:    ":8080",
-		Handler: mux,
+		Addr:              ":8080",
+		Handler:           mux,
+		ReadHeaderTimeout: 20 * time.Second,
 	}
 }
 
 // startMonitoring starts the monitoring process
-func startMonitoring(lc fx.Lifecycle, server *http.Server, pm *monitoring.PodMonitor, cfg *config.Config, logger *zap.SugaredLogger) {
+func startMonitoring(
+	lc fx.Lifecycle,
+	server *http.Server,
+	pm *monitoring.PodMonitor,
+	cfg *config.Config,
+	logger *zap.SugaredLogger,
+) {
 	// Add the HTTP server to the lifecycle
 	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
+		OnStart: func(_ context.Context) error {
 			logger.Info("Starting HTTP server on :8080")
 			// Start the HTTP server in a goroutine
 			go func() {
@@ -87,9 +96,10 @@ func startMonitoring(lc fx.Lifecycle, server *http.Server, pm *monitoring.PodMon
 			}()
 			return nil
 		},
-		OnStop: func(ctx context.Context) error {
+		OnStop: func(_ context.Context) error {
 			logger.Info("Shutting down HTTP server")
-			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			const serverShutdownTimeout = 5 * time.Second
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), serverShutdownTimeout)
 			defer cancel()
 			return server.Shutdown(shutdownCtx)
 		},
@@ -100,7 +110,7 @@ func startMonitoring(lc fx.Lifecycle, server *http.Server, pm *monitoring.PodMon
 
 	// Add monitoring stop to the lifecycle
 	lc.Append(fx.Hook{
-		OnStop: func(ctx context.Context) error {
+		OnStop: func(_ context.Context) error {
 			logger.Info("Shutting down monitoring process")
 			pm.Stop()
 			return nil

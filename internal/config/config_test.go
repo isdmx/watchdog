@@ -14,7 +14,7 @@ func TestConfigLoading(t *testing.T) {
 	// Create a temporary config file for testing
 	tempDir := t.TempDir()
 	configPath := filepath.Join(tempDir, "config.yaml")
-	
+
 	configContent := `
 watchdog:
   namespaces:
@@ -31,14 +31,17 @@ logging:
   mode: "development"
   level: "debug"
 `
-	
-	err := os.WriteFile(configPath, []byte(configContent), 0644)
+
+	err := os.WriteFile(configPath, []byte(configContent), 0600)
 	require.NoError(t, err)
 
 	// Change to temp dir to read the config file
 	oldDir, err := os.Getwd()
 	require.NoError(t, err)
-	defer os.Chdir(oldDir)
+	defer func() {
+		// Best effort to return to original directory
+		_ = os.Chdir(oldDir)
+	}()
 
 	err = os.Chdir(tempDir)
 	require.NoError(t, err)
@@ -49,7 +52,7 @@ logging:
 
 	// Verify the config values
 	require.NotNil(t, cfg)
-	
+
 	assert.Equal(t, []string{"test-namespace", "another-namespace"}, cfg.Watchdog.Namespaces)
 	assert.Equal(t, "test-app", cfg.Watchdog.LabelSelectors["app"])
 	assert.Equal(t, "v1", cfg.Watchdog.LabelSelectors["version"])
@@ -63,7 +66,7 @@ logging:
 func TestConfigWithDefaults(t *testing.T) {
 	// Test with default values when config is not present
 	cfg := ProvideConfigForTest()
-	
+
 	require.NotNil(t, cfg)
 	assert.Equal(t, []string{"default"}, cfg.Watchdog.Namespaces)
 	assert.Equal(t, "test", cfg.Watchdog.LabelSelectors["app"])

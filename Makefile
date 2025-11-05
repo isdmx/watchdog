@@ -3,23 +3,30 @@
 # Build the application
 .PHONY: build
 build:
-	go build -o bin/watchdog .
+	go build -o bin/watchdog ./cmd/watchdog
 
 # Run tests
 .PHONY: test
 test:
 	go test -v ./...
 
-# Run tests with coverage
+# Run tests with coverage and show in terminal
+.PHONY: coverage
+coverage:
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+
+# Run tests with coverage and generate HTML report
 .PHONY: test-coverage
 test-coverage:
 	go test -v -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
+	@echo "HTML coverage report generated: coverage.html"
 
 # Run the application locally
 .PHONY: run
 run:
-	go run main.go
+	go run ./cmd/watchdog
 
 # Build Docker image
 .PHONY: docker-build
@@ -37,16 +44,25 @@ deps:
 	go mod download
 	go mod tidy
 
-# Format code
+# Lint code
+.PHONY: lint
+lint:
+	golangci-lint run ./...
+
+# Install golangci-lint
+.PHONY: install-lint
+install-lint:
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+
+# Run go fmt
 .PHONY: fmt
 fmt:
 	go fmt ./...
 
-# Lint code
-.PHONY: lint
-lint:
+# Run go vet
+.PHONY: vet
+vet:
 	go vet ./...
-	golangci-lint run ./... # Requires golangci-lint to be installed
 
 # Clean build artifacts
 .PHONY: clean
@@ -58,16 +74,16 @@ clean:
 # Deploy to Kubernetes
 .PHONY: deploy
 deploy:
-	kubectl apply -f k8s/configmap.yaml
-	kubectl apply -f k8s/rbac.yaml
-	kubectl apply -f k8s/deployment.yaml
+	kubectl apply -f deployments/k8s/configmap.yaml
+	kubectl apply -f deployments/k8s/rbac.yaml
+	kubectl apply -f deployments/k8s/deployment.yaml
 
 # Remove deployment from Kubernetes
 .PHONY: undeploy
 undeploy:
-	kubectl delete -f k8s/deployment.yaml
-	kubectl delete -f k8s/rbac.yaml
-	kubectl delete -f k8s/configmap.yaml
+	kubectl delete -f deployments/k8s/deployment.yaml
+	kubectl delete -f deployments/k8s/rbac.yaml
+	kubectl delete -f deployments/k8s/configmap.yaml
 
 # Show help
 .PHONY: help
@@ -75,7 +91,8 @@ help:
 	@echo "Available targets:"
 	@echo "  build         - Build the application"
 	@echo "  test          - Run tests"
-	@echo "  test-coverage - Run tests with coverage"
+	@echo "  coverage      - Run tests with coverage and show in terminal"
+	@echo "  test-coverage - Run tests with coverage and generate HTML report"
 	@echo "  run           - Run the application locally"
 	@echo "  docker-build  - Build Docker image"
 	@echo "  docker-run    - Run Docker container"

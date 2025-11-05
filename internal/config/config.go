@@ -15,11 +15,11 @@ type Config struct {
 
 // WatchdogConfig holds the watchdog-specific configuration
 type WatchdogConfig struct {
-	Namespaces       []string      `mapstructure:"namespaces"`
+	Namespaces       []string          `mapstructure:"namespaces"`
 	LabelSelectors   map[string]string `mapstructure:"labelSelectors"`
-	ScheduleInterval time.Duration `mapstructure:"scheduleInterval"`
-	MaxPodLifetime   time.Duration `mapstructure:"maxPodLifetime"`
-	DryRun           bool          `mapstructure:"dryRun"`
+	ScheduleInterval time.Duration     `mapstructure:"scheduleInterval"`
+	MaxPodLifetime   time.Duration     `mapstructure:"maxPodLifetime"`
+	DryRun           bool              `mapstructure:"dryRun"`
 }
 
 // LoggingConfig holds the logging configuration

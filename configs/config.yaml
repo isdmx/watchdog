@@ -5,7 +5,7 @@ watchdog:
   labelSelectors:
     app: "temporary"
     cleanup: "true"
-  scheduleInterval: "5m"
+  scheduleInterval: "1m"
   maxPodLifetime: "1h"
   dryRun: true  # Set to true for testing
 

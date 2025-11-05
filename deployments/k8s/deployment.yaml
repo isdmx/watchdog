@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watchdog
+  namespace: default
+  labels:
+    app: watchdog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watchdog
+  template:
+    metadata:
+      labels:
+        app: watchdog
+    spec:
+      serviceAccountName: watchdog-service-account
+      containers:
+      - name: watchdog
+        image: watchdog:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: KUBERNETES_SERVICE_HOST
+          value: kubernetes.default.svc.cluster.local
+        - name: KUBERNETES_SERVICE_PORT
+          value: "443"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/watchdog
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: watchdog-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: watchdog-service
+  namespace: default
+  labels:
+    app: watchdog
+spec:
+  selector:
+    app: watchdog
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP

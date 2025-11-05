@@ -42,9 +42,6 @@ temp/
 .docker/
 
 # Kubernetes
-*.yaml
-!k8s/
-!*.yaml  # Don't ignore the yaml files in the main directory that are part of the project
 
 # Local config files (but not the template config.yaml)
 config-local.yaml

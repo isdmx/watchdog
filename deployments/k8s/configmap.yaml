@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watchdog-config
+  namespace: default
+data:
+  config.yaml: |
+    watchdog:
+      namespaces:
+        - "default"
+        - "production"
+      labelSelectors:
+        app: "temporary"
+        cleanup: "true"
+      scheduleInterval: "5m"
+      maxPodLifetime: "1h"
+      dryRun: false
+
+    logging:
+      mode: "production"
+      level: "info"

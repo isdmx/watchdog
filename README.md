@@ -27,25 +27,25 @@ watchdog:
   namespaces:
     - "namespace1"
     - "namespace2"
-  
+
   # Label selector criteria for identifying target pods
   labelSelectors:
     key1: "value1"
     key2: "value2"
-  
+
   # Cleanup scheduling in duration format (e.g., "5m", "1h", "24h")
   scheduleInterval: "10m"
-  
+
   # Maximum pod lifetime before cleanup consideration
   maxPodLifetime: "24h"
-  
+
   # Additional safety settings
   dryRun: false  # If true, only log what would be deleted without taking action
 
 logging:
   # Logging mode: "production" or "development"
   mode: "production"
-  
+
   # Log level using zap logging levels: "debug", "info", "warn", "error", "dpanic", "panic", "fatal"
   level: "info"
 ```
@@ -80,7 +80,7 @@ kubectl apply -f k8s/
 ## Endpoints
 
 - `/healthz` - Health check endpoint
-- `/readyz` - Readiness check endpoint  
+- `/readyz` - Readiness check endpoint
 - `/metrics` - Prometheus metrics endpoint
 
 ## Development
@@ -104,6 +104,54 @@ go fmt ./...
 3. Make your changes
 4. Add tests for new functionality
 5. Submit a pull request
+
+### Setting up Development Tools
+
+#### Installing pre-commit
+
+To install pre-commit, you can use the following methods:
+
+- **Using pip**:
+  ```bash
+  pip install pre-commit
+  ```
+
+- **Using Homebrew (macOS)**:
+  ```bash
+  brew install pre-commit
+  ```
+
+- **Using conda**:
+  ```bash
+  conda install -c conda-forge pre-commit
+  ```
+
+For more information, visit [pre-commit's official website](https://pre-commit.com/).
+
+#### Installing golangci-lint
+
+To install golangci-lint, you can use the following methods:
+
+- **Using Go install**:
+  ```bash
+  go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+  ```
+
+- **Using Homebrew (macOS)**:
+  ```bash
+  brew install golangci-lint
+  ```
+
+- **Using other package managers**:
+  ```bash
+  # Using snap (Linux)
+  snap install golangci-lint
+
+  # Using yay (Arch Linux)
+  yay -S golangci-lint
+  ```
+
+For more information, visit [golangci-lint's official website](https://golangci-lint.run/).
 
 ## License
 

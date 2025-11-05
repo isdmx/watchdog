@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	"github.com/isdmx/watchdog/config"
+	"github.com/isdmx/watchdog/internal/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,10 +22,10 @@ type KubernetesInterface interface {
 
 // PodMonitor handles pod monitoring and cleanup operations
 type PodMonitor struct {
-	clientset    KubernetesInterface
-	config       *config.Config
-	logger       *zap.SugaredLogger
-	stopChannel  chan struct{}
+	clientset   KubernetesInterface
+	config      *config.Config
+	logger      *zap.SugaredLogger
+	stopChannel chan struct{}
 }
 
 // NewPodMonitor creates a new pod monitor
@@ -41,7 +41,7 @@ func NewPodMonitor(clientset kubernetes.Interface, cfg *config.Config, logger *z
 // MonitorAndCleanup performs the monitoring and cleanup operation
 func (pm *PodMonitor) MonitorAndCleanup() error {
 	pm.logger.Info("Starting pod monitoring and cleanup")
-	
+
 	startTime := time.Now()
 	defer func() {
 		duration := time.Since(startTime)
@@ -54,7 +54,7 @@ func (pm *PodMonitor) MonitorAndCleanup() error {
 
 	for _, namespace := range pm.config.Watchdog.Namespaces {
 		pm.logger.Debugf("Processing namespace: %s", namespace)
-		
+
 		// List pods in the namespace with the specified labels
 		pods, err := pm.clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: labelSelector,
@@ -68,16 +68,17 @@ func (pm *PodMonitor) MonitorAndCleanup() error {
 		PodsExaminedTotal.Add(float64(len(pods.Items)))
 
 		// Filter and terminate old pods
-		for _, pod := range pods.Items {
+		for i := range pods.Items {
+			pod := &pods.Items[i] // Use pointer to avoid copying
 			age := time.Since(pod.CreationTimestamp.Time)
-			
+
 			pm.logger.Debugf("Pod %s age: %v, max age: %v", pod.Name, age, pm.config.Watchdog.MaxPodLifetime)
 
 			// Check if the pod exceeds the maximum lifetime
 			if age > pm.config.Watchdog.MaxPodLifetime {
-				pm.logger.Info("Pod exceeds maximum lifetime", 
-					"pod", pod.Name, 
-					"namespace", namespace, 
+				pm.logger.Info("Pod exceeds maximum lifetime",
+					"pod", pod.Name,
+					"namespace", namespace,
 					"age", age,
 					"maxAge", pm.config.Watchdog.MaxPodLifetime)
 
@@ -104,7 +105,7 @@ func (pm *PodMonitor) MonitorAndCleanup() error {
 
 // buildLabelSelector creates a label selector string from a map
 func buildLabelSelector(labels map[string]string) string {
-	var selectorParts []string
+	selectorParts := make([]string, 0, len(labels))
 	for key, value := range labels {
 		selectorParts = append(selectorParts, fmt.Sprintf("%s=%s", key, value))
 	}
