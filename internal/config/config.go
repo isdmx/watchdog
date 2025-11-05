@@ -33,6 +33,7 @@ func NewConfig() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("configs")
 
 	// Set default values
 	viper.SetDefault("watchdog.scheduleInterval", "10m")

@@ -31,6 +31,7 @@ func main() {
 		handlers.HealthCheckModule,
 
 		// HTTP server
+		fx.Provide(newServeMux),
 		fx.Provide(newHTTPServer),
 
 		// Monitoring module
@@ -65,15 +66,17 @@ func main() {
 }
 
 // newHTTPServer creates a new HTTP server with health check endpoints
-func newHTTPServer(healthHandler *handlers.HealthHandler) *http.Server {
-	mux := http.NewServeMux()
-	healthHandler.RegisterRoutes(mux)
-
+func newHTTPServer(mux *http.ServeMux) *http.Server {
 	return &http.Server{
 		Addr:              ":8080",
 		Handler:           mux,
 		ReadHeaderTimeout: 20 * time.Second,
 	}
+}
+
+// newServeMux creates a new HTTP ServeMux and registers all routes
+func newServeMux() *http.ServeMux {
+	return http.NewServeMux()
 }
 
 // startMonitoring starts the monitoring process

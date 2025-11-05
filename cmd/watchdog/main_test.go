@@ -30,7 +30,10 @@ func TestNewHTTPServer(t *testing.T) {
 
 	healthHandler := handlers.NewHealthHandler(logger.Sugar())
 
-	server := newHTTPServer(healthHandler)
+	mux := newServeMux()
+	healthHandler.RegisterRoutes(mux)
+
+	server := newHTTPServer(mux)
 
 	if server.Addr != ":8080" {
 		t.Errorf("Expected server address to be :8080, got %s", server.Addr)
@@ -73,7 +76,9 @@ func TestStartMonitoringFunction(t *testing.T) {
 
 	// Create a dummy HTTP server
 	healthHandler := handlers.NewHealthHandler(logger.Sugar())
-	server := newHTTPServer(healthHandler)
+	mux := newServeMux()
+	healthHandler.RegisterRoutes(mux)
+	server := newHTTPServer(mux)
 
 	// Test that startMonitoring completes without error
 	// Since startMonitoring runs server and monitoring in goroutines,

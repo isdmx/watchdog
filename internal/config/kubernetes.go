@@ -11,7 +11,7 @@ import (
 )
 
 // NewKubernetesClient creates a new Kubernetes client
-func NewKubernetesClient() (*kubernetes.Clientset, error) {
+func NewKubernetesClient() (kubernetes.Interface, error) {
 	var kubeconfig string
 	if home := homedir.HomeDir(); home != "" {
 		kubeconfig = filepath.Join(home, ".kube", "config")

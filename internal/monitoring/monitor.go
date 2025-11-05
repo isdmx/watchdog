@@ -8,7 +8,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -16,14 +15,9 @@ import (
 	"github.com/isdmx/watchdog/internal/config"
 )
 
-// KubernetesInterface abstracts the Kubernetes client for testing
-type KubernetesInterface interface {
-	CoreV1() corev1client.CoreV1Interface
-}
-
 // PodMonitor handles pod monitoring and cleanup operations
 type PodMonitor struct {
-	clientset   KubernetesInterface
+	clientset   kubernetes.Interface
 	config      *config.Config
 	logger      *zap.SugaredLogger
 	stopChannel chan struct{}
