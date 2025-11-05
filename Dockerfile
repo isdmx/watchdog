@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -o watchdog .
+RUN CGO_ENABLED=0 GOOS=linux go build -o watchdog ./cmd/watchdog
 
 # Final stage
 FROM alpine:latest

@@ -1,0 +1,209 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.24', '1.25' ]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: true
+
+    - name: Verify Go version
+      run: go version
+
+    - name: Install dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Run tests
+      run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        file: ./coverage.txt
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25'
+        cache: true
+
+    - name: Install golangci-lint
+      run: |
+        go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+
+    - name: Run golangci-lint
+      run: golangci-lint run --timeout=5m
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25'
+        cache: true
+
+    - name: Check formatting with gofmt
+      run: |
+        files=$(go run golang.org/x/tools/cmd/goimports@latest -l .)
+        if [ -n "$files" ]; then
+          echo "The following files need formatting:"
+          echo "$files"
+          exit 1
+        fi
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.24', '1.25' ]
+        os: [ ubuntu-latest, macos-latest ]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: true
+
+    - name: Build for ${{ matrix.os }}
+      run: |
+        go build -v ./...
+
+    - name: Build specific binaries
+      run: |
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/watchdog-linux-amd64 ./cmd/watchdog
+        # CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/watchdog-darwin-amd64 ./cmd/watchdog
+        # CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o bin/watchdog-windows-amd64.exe ./cmd/watchdog
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: binaries-${{ matrix.os }}-${{ matrix.go-version }}
+        path: bin/
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25'
+        cache: true
+
+    - name: Run coverage
+      run: |
+        go test -covermode=count -coverprofile=coverage.out ./...
+        go tool cover -func=coverage.out -o coverage-report.out
+
+    - name: Print coverage summary
+      run: |
+        echo "Coverage Summary:"
+        cat coverage-report.out
+        total_coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+        echo "Total Coverage: $total_coverage"
+        echo "TOTAL_COVERAGE=$total_coverage" >> $GITHUB_ENV
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage-report.out
+
+    - name: Check minimum coverage
+      run: |
+        total_coverage="${{ env.TOTAL_COVERAGE }}"
+        coverage_number=$(echo $total_coverage | sed 's/%//')
+        if (( $(echo "$coverage_number < 80" | bc -l) )); then
+          echo "Coverage is below 80%: $total_coverage"
+          exit 1
+        else
+          echo "Coverage is acceptable: $total_coverage"
+        fi
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run gosec security scanner
+      uses: securecodewarfare/gosec-sarif@v2.0.0
+      with:
+        pattern: "*.go"
+        exclude: "*/vendor/*,*/test/*"
+        report-filename: "gosec-report.sarif"
+
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: gosec-report.sarif
+        category: gosec
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [test, lint, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, lint, format, build, coverage, security]
+    if: always()
+    steps:
+    - name: Check workflow status
+      run: |
+        result="${{ needs.test.result }}"
+        if [[ "$result" == "success" ]]; then
+          echo "All checks passed ✅"
+        else
+          echo "Some checks failed ❌"
+          exit 1
+        fi

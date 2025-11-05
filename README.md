@@ -55,7 +55,7 @@ logging:
 To build the application:
 
 ```bash
-go build -o watchdog .
+go build -o watchdog ./cmd/watchdog
 ```
 
 ## Running Locally
@@ -74,7 +74,7 @@ The application is designed to run as a deployment in Kubernetes. See the `k8s/`
 To deploy to Kubernetes:
 
 ```bash
-kubectl apply -f k8s/
+kubectl apply -f deployments/k8s/
 ```
 
 ## Endpoints
@@ -112,18 +112,15 @@ go fmt ./...
 To install pre-commit, you can use the following methods:
 
 - **Using pip**:
+
   ```bash
   pip install pre-commit
   ```
 
 - **Using Homebrew (macOS)**:
+
   ```bash
   brew install pre-commit
-  ```
-
-- **Using conda**:
-  ```bash
-  conda install -c conda-forge pre-commit
   ```
 
 For more information, visit [pre-commit's official website](https://pre-commit.com/).
@@ -133,22 +130,15 @@ For more information, visit [pre-commit's official website](https://pre-commit.c
 To install golangci-lint, you can use the following methods:
 
 - **Using Go install**:
+
   ```bash
-  go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+  go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
   ```
 
 - **Using Homebrew (macOS)**:
+
   ```bash
   brew install golangci-lint
-  ```
-
-- **Using other package managers**:
-  ```bash
-  # Using snap (Linux)
-  snap install golangci-lint
-
-  # Using yay (Arch Linux)
-  yay -S golangci-lint
   ```
 
 For more information, visit [golangci-lint's official website](https://golangci-lint.run/).
