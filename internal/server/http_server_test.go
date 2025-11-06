@@ -30,7 +30,7 @@ func TestNewHttpServer(t *testing.T) {
 		}
 
 		lc := fxtest.NewLifecycle(t)
-		server := NewHttpServer(lc, sugaredLogger, cfg)
+		server := NewHTTPServer(lc, sugaredLogger, cfg)
 
 		require.NotNil(t, server)
 		require.NotNil(t, server.server)
@@ -53,7 +53,7 @@ func TestRegisterRoutes(t *testing.T) {
 	}
 
 	lc := fxtest.NewLifecycle(t)
-	server := NewHttpServer(lc, sugaredLogger, cfg)
+	server := NewHTTPServer(lc, sugaredLogger, cfg)
 
 	mux := http.NewServeMux()
 	server.RegisterRoutes(mux)
@@ -117,7 +117,7 @@ func TestHttpServerMethods(t *testing.T) {
 	}
 
 	lc := fxtest.NewLifecycle(t)
-	server := NewHttpServer(lc, sugaredLogger, cfg)
+	server := NewHTTPServer(lc, sugaredLogger, cfg)
 
 	t.Run("start and shutdown server", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -141,7 +141,7 @@ func TestHttpHandlerFunctions(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	sugaredLogger := logger.Sugar()
 
-	server := &HttpServer{
+	server := &HTTPServer{
 		logger: sugaredLogger,
 	}
 

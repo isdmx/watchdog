@@ -26,7 +26,7 @@ func NewPodMonitor(clientset kubernetes.Interface, cfg *config.Config, logger *z
 	return &PodMonitor{
 		clientset: clientset,
 		config:    cfg,
-		logger:    logger,
+		logger:    logger.Named("PodMonitor"),
 	}
 }
 
@@ -52,7 +52,7 @@ func (pm *PodMonitor) MonitorAndCleanup() error {
 			LabelSelector: labelSelector,
 		})
 		if err != nil {
-			pm.logger.Error("Failed to list pods", "namespace", namespace, "error", err)
+			pm.logger.Errorw("Failed to list pods", "namespace", namespace, "error", err)
 			continue
 		}
 
@@ -68,22 +68,22 @@ func (pm *PodMonitor) MonitorAndCleanup() error {
 
 			// Check if the pod exceeds the maximum lifetime
 			if age > pm.config.Watchdog.MaxPodLifetime {
-				pm.logger.Info("Pod exceeds maximum lifetime",
+				pm.logger.Infow("Pod exceeds maximum lifetime",
 					"pod", pod.Name,
 					"namespace", namespace,
 					"age", age,
 					"maxAge", pm.config.Watchdog.MaxPodLifetime)
 
 				if pm.config.Watchdog.DryRun {
-					pm.logger.Info("DRY RUN: Would terminate pod", "pod", pod.Name, "namespace", namespace)
+					pm.logger.Infow("DRY RUN: Would terminate pod", "pod", pod.Name, "namespace", namespace)
 					PodsTerminatedTotal.WithLabelValues(namespace, "true").Inc()
 				} else {
 					// Terminate the pod
 					err := pm.terminatePod(namespace, pod.Name)
 					if err != nil {
-						pm.logger.Error("Failed to terminate pod", "pod", pod.Name, "namespace", namespace, "error", err)
+						pm.logger.Errorw("Failed to terminate pod", "pod", pod.Name, "namespace", namespace, "error", err)
 					} else {
-						pm.logger.Info("Successfully terminated pod", "pod", pod.Name, "namespace", namespace)
+						pm.logger.Infow("Successfully terminated pod", "pod", pod.Name, "namespace", namespace)
 						PodsTerminatedTotal.WithLabelValues(namespace, "false").Inc()
 						PodsTerminatedByAgeTotal.WithLabelValues(namespace).Inc()
 					}
