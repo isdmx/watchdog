@@ -29,7 +29,7 @@ func NewApplication() *fx.App {
 
 		// HTTP server
 		fx.Provide(fx.Annotate(
-			server.NewHttpServer,
+			server.NewHTTPServer,
 			fx.ResultTags(`group:"servers"`),
 			fx.As(new(server.Server)),
 		)),

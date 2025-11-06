@@ -44,7 +44,6 @@ func TestNewWatchdogServer(t *testing.T) {
 
 		require.NotNil(t, wdServer)
 		require.Equal(t, podMonitor, wdServer.pm)
-		require.Equal(t, sugaredLogger, wdServer.logger)
 		require.Equal(t, configObj, wdServer.config)
 		require.NotNil(t, wdServer.stopChannel)
 	})

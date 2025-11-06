@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestNewKubernetesClient(t *testing.T) {
@@ -26,7 +27,7 @@ func TestNewKubernetesClient(t *testing.T) {
 		// Restore the original home directory after the test
 		defer os.Setenv("HOME", origHome)
 
-		clientset, err := NewKubernetesClient()
+		clientset, err := NewKubernetesClient(zap.NewNop().Sugar())
 		// This should fail because there's no kubeconfig in the temp home directory
 		require.Error(t, err)
 		require.Nil(t, clientset)

@@ -30,7 +30,6 @@ func TestNewPodMonitor(t *testing.T) {
 	require.NotNil(t, pm)
 	require.Equal(t, clientset, pm.clientset)
 	require.Equal(t, cfg, pm.config)
-	require.Equal(t, sugaredLogger, pm.logger)
 }
 
 func TestMonitorAndCleanup(t *testing.T) {

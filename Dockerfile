@@ -29,13 +29,13 @@ RUN apk --no-cache add ca-certificates
 RUN adduser -D -s /bin/sh watchdog
 
 # Set working directory
-WORKDIR /home/watchdog
+WORKDIR /app/watchdog
 
 # Copy the binary from builder stage
 COPY --from=builder /app/watchdog .
 
 # Change ownership
-RUN chown -R watchdog:watchdog /home/watchdog
+RUN chown -R watchdog:watchdog /app/watchdog
 
 # Switch to non-root user
 USER watchdog

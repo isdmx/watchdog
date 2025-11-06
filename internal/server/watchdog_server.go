@@ -13,6 +13,7 @@ import (
 
 var _ Server = (*WatchdogServer)(nil)
 
+// WatchdogServer represents the watchdog server
 type WatchdogServer struct {
 	pm          *monitoring.PodMonitor
 	logger      *zap.SugaredLogger
@@ -20,10 +21,11 @@ type WatchdogServer struct {
 	stopChannel chan struct{}
 }
 
+// NewWatchdogServer creates a new watchdog server
 func NewWatchdogServer(lc fx.Lifecycle, pm *monitoring.PodMonitor, logger *zap.SugaredLogger, cfg *config.Config) *WatchdogServer {
 	wd := &WatchdogServer{
 		pm:          pm,
-		logger:      logger,
+		logger:      logger.Named("WatchdogServer"),
 		config:      cfg,
 		stopChannel: make(chan struct{}),
 	}
@@ -36,9 +38,9 @@ func NewWatchdogServer(lc fx.Lifecycle, pm *monitoring.PodMonitor, logger *zap.S
 	return wd
 }
 
-// StartMonitoring starts the monitoring process
+// Start starts the monitoring process
 func (wd *WatchdogServer) Start(_ context.Context) error {
-	wd.logger.Info("Starting periodic monitoring", "interval", wd.config.Watchdog.ScheduleInterval)
+	wd.logger.Infow("Starting periodic monitoring", "interval", wd.config.Watchdog.ScheduleInterval)
 
 	go func() {
 		// Start periodic monitoring
@@ -50,7 +52,7 @@ func (wd *WatchdogServer) Start(_ context.Context) error {
 				wd.logger.Info("Starting scheduled monitoring check")
 				err := wd.pm.MonitorAndCleanup()
 				if err != nil {
-					wd.logger.Error("Scheduled monitoring run failed", "error", err)
+					wd.logger.Errorw("Scheduled monitoring run failed", "error", err)
 				}
 			case <-wd.stopChannel:
 				wd.logger.Info("Stopping monitoring")
@@ -63,7 +65,7 @@ func (wd *WatchdogServer) Start(_ context.Context) error {
 	return nil
 }
 
-// Stop stops the monitoring process
+// Shutdown stops the monitoring process
 func (wd *WatchdogServer) Shutdown(_ context.Context) error {
 	close(wd.stopChannel)
 	wd.logger.Info("Monitoring stopped")
