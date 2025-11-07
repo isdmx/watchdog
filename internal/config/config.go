@@ -10,11 +10,11 @@ import (
 type Config struct {
 	Watchdog WatchdogConfig `mapstructure:"watchdog"`
 	Logging  LoggingConfig  `mapstructure:"logging"`
-	Http     HttpConfig     `mapstructure:"http"`
+	HTTP     HTTPConfig     `mapstructure:"http"`
 }
 
-// HealthConfig holds the healthcheck-specific configuration
-type HttpConfig struct {
+// HTTPConfig holds the healthcheck-specific configuration
+type HTTPConfig struct {
 	Addr         string        `mapstructure:"addr"`
 	ReadTimeout  time.Duration `mapstructure:"readTimeout"`
 	WriteTimeout time.Duration `mapstructure:"writeTimeout"`
@@ -36,7 +36,7 @@ type LoggingConfig struct {
 }
 
 const (
-	defaultHttpAddr         = ":8080"
+	defaultHTTPAddr         = ":8080"
 	defaultReadTimeout      = 5 * time.Second
 	defaultWriteTimeout     = 10 * time.Second
 	defaultScheduleInterval = 10 * time.Minute
@@ -54,7 +54,7 @@ func NewConfig() (*Config, error) {
 	viper.AddConfigPath("config")
 
 	// Set default values
-	viper.SetDefault("http.addr", defaultHttpAddr)
+	viper.SetDefault("http.addr", defaultHTTPAddr)
 	viper.SetDefault("http.readTimeout", defaultReadTimeout)
 	viper.SetDefault("http.writeTimeout", defaultWriteTimeout)
 	viper.SetDefault("watchdog.scheduleInterval", defaultScheduleInterval)

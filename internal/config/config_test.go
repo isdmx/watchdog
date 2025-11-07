@@ -29,7 +29,7 @@ http:
 logging:
   mode: development
   level: debug
-`), 0600)
+`), 0o600)
 		require.NoError(t, err)
 
 		// Change to the temp directory to find the config
@@ -53,9 +53,9 @@ logging:
 		require.True(t, config.Watchdog.DryRun)
 
 		// Check http config
-		require.Equal(t, ":9090", config.Http.Addr)
-		require.Equal(t, 10*time.Second, config.Http.ReadTimeout)
-		require.Equal(t, 20*time.Second, config.Http.WriteTimeout)
+		require.Equal(t, ":9090", config.HTTP.Addr)
+		require.Equal(t, 10*time.Second, config.HTTP.ReadTimeout)
+		require.Equal(t, 20*time.Second, config.HTTP.WriteTimeout)
 
 		// Check logging config
 		require.Equal(t, "development", config.Logging.Mode)
@@ -83,7 +83,7 @@ logging:
 	t.Run("handles invalid config file", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		cfgPath := filepath.Join(tmpDir, "config.yaml")
-		err := os.WriteFile(cfgPath, []byte("invalid yaml"), 0600)
+		err := os.WriteFile(cfgPath, []byte("invalid yaml"), 0o600)
 		require.NoError(t, err)
 
 		origDir, err := os.Getwd()
@@ -104,7 +104,7 @@ func TestConfigDefaults(t *testing.T) {
 	// Test with default values when config file exists but doesn't specify all values
 	tmpDir := t.TempDir()
 	cfgPath := filepath.Join(tmpDir, "config.yaml")
-	err := os.WriteFile(cfgPath, []byte(`watchdog: {}`), 0600)
+	err := os.WriteFile(cfgPath, []byte(`watchdog: {}`), 0o600)
 	require.NoError(t, err)
 
 	origDir, err := os.Getwd()
@@ -120,9 +120,9 @@ func TestConfigDefaults(t *testing.T) {
 	require.NotNil(t, config)
 
 	// Check defaults
-	require.Equal(t, defaultHttpAddr, config.Http.Addr)
-	require.Equal(t, defaultReadTimeout, config.Http.ReadTimeout)
-	require.Equal(t, defaultWriteTimeout, config.Http.WriteTimeout)
+	require.Equal(t, defaultHTTPAddr, config.HTTP.Addr)
+	require.Equal(t, defaultReadTimeout, config.HTTP.ReadTimeout)
+	require.Equal(t, defaultWriteTimeout, config.HTTP.WriteTimeout)
 	require.Equal(t, defaultScheduleInterval, config.Watchdog.ScheduleInterval)
 	require.Equal(t, defaultMaxPodLifetime, config.Watchdog.MaxPodLifetime)
 	require.Equal(t, defaultDryRun, config.Watchdog.DryRun)
