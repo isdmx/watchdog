@@ -22,7 +22,7 @@ func TestNewHttpServer(t *testing.T) {
 		sugaredLogger := logger.Sugar()
 
 		cfg := &config.Config{
-			Http: config.HttpConfig{
+			HTTP: config.HTTPConfig{
 				Addr:         ":8080",
 				ReadTimeout:  5 * time.Second,
 				WriteTimeout: 10 * time.Second,
@@ -34,9 +34,9 @@ func TestNewHttpServer(t *testing.T) {
 
 		require.NotNil(t, server)
 		require.NotNil(t, server.server)
-		require.Equal(t, cfg.Http.Addr, server.server.Addr)
-		require.Equal(t, cfg.Http.ReadTimeout, server.server.ReadTimeout)
-		require.Equal(t, cfg.Http.WriteTimeout, server.server.WriteTimeout)
+		require.Equal(t, cfg.HTTP.Addr, server.server.Addr)
+		require.Equal(t, cfg.HTTP.ReadTimeout, server.server.ReadTimeout)
+		require.Equal(t, cfg.HTTP.WriteTimeout, server.server.WriteTimeout)
 	})
 }
 
@@ -45,7 +45,7 @@ func TestRegisterRoutes(t *testing.T) {
 	sugaredLogger := logger.Sugar()
 
 	cfg := &config.Config{
-		Http: config.HttpConfig{
+		HTTP: config.HTTPConfig{
 			Addr:         ":8080",
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
@@ -109,7 +109,7 @@ func TestHttpServerMethods(t *testing.T) {
 	sugaredLogger := logger.Sugar()
 
 	cfg := &config.Config{
-		Http: config.HttpConfig{
+		HTTP: config.HTTPConfig{
 			Addr:         ":0", // Use random port
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,

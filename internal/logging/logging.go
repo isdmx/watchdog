@@ -17,6 +17,10 @@ func NewLogger(cfg *config.Config) (*zap.Logger, error) {
 		loggerConfig = zap.NewProductionConfig()
 	}
 
+	loggerConfig.DisableCaller = cfg.Logging.Mode == "production"
+	loggerConfig.DisableStacktrace = cfg.Logging.Mode == "production"
+	loggerConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
 	// Set the log level based on configuration
 	level, err := zapcore.ParseLevel(cfg.Logging.Level)
 	if err != nil {

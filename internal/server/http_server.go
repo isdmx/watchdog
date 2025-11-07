@@ -27,9 +27,9 @@ func NewHTTPServer(lc fx.Lifecycle, logger *zap.SugaredLogger, cfg *config.Confi
 		logger: logger.Named("HTTPServer"),
 		server: &http.Server{
 			Handler:      mux,
-			Addr:         cfg.Http.Addr,
-			ReadTimeout:  cfg.Http.ReadTimeout,
-			WriteTimeout: cfg.Http.WriteTimeout,
+			Addr:         cfg.HTTP.Addr,
+			ReadTimeout:  cfg.HTTP.ReadTimeout,
+			WriteTimeout: cfg.HTTP.WriteTimeout,
 		},
 	}
 
@@ -90,6 +90,7 @@ func (h *HTTPServer) Start(ctx context.Context) error {
 	return nil
 }
 
+// Shutdown gracefully shuts down the HTTP server
 func (h *HTTPServer) Shutdown(ctx context.Context) error {
 	h.logger.Info("Shutting down HTTP server")
 	return h.server.Shutdown(ctx)
