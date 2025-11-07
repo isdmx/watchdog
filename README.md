@@ -22,6 +22,14 @@ Watchdog is a Kubernetes resource management tool that monitors and cleans up un
 The application requires a `config.yaml` file with the following structure:
 
 ```yaml
+http:
+  # HTTP server address and port
+  addr: ":8080"
+  # HTTP server read timeout
+  readTimeout: "5s"
+  # HTTP server write timeout
+  writeTimeout: "10s"
+
 watchdog:
   # List of namespaces to monitor
   namespaces:
