@@ -26,6 +26,7 @@ type WatchdogConfig struct {
 	LabelSelectors   map[string]string `mapstructure:"labelSelectors"`
 	ScheduleInterval time.Duration     `mapstructure:"scheduleInterval"`
 	MaxPodLifetime   time.Duration     `mapstructure:"maxPodLifetime"`
+	TtlLabel         string            `mapstructure:"ttlLabel"`
 	DryRun           bool              `mapstructure:"dryRun"`
 }
 

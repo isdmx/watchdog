@@ -43,50 +43,50 @@ func (pm *PodMonitor) MonitorAndCleanup() error {
 
 	// Create label selector from config
 	labelSelector := buildLabelSelector(pm.config.Watchdog.LabelSelectors)
+	ager := NewAgerFromConfig(&pm.config.Watchdog, pm.logger)
 
 	for _, namespace := range pm.config.Watchdog.Namespaces {
-		pm.logger.Debugf("Processing namespace: %s", namespace)
+		logger_namespace := pm.logger.WithLazy("namespace", namespace)
+		logger_namespace.Debugf("Processing namespace")
 
 		// List pods in the namespace with the specified labels
 		pods, err := pm.clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: labelSelector,
 		})
 		if err != nil {
-			pm.logger.Errorw("Failed to list pods", "namespace", namespace, "error", err)
+			logger_namespace.Errorw("Failed to list pods", "error", err)
 			continue
 		}
 
-		pm.logger.Debugf("Found %d pods in namespace %s with matching labels", len(pods.Items), namespace)
+		logger_namespace.Debugf("Found %d pods in namespace with matching labels", len(pods.Items))
 		PodsExaminedTotal.Add(float64(len(pods.Items)))
 
 		// Filter and terminate old pods
 		for i := range pods.Items {
-			pod := &pods.Items[i] // Use pointer to avoid copying
-			age := time.Since(pod.CreationTimestamp.Time)
+			pod := &pods.Items[i]
+			logger_pod := logger_namespace.WithLazy("pod", pod.Name)
 
-			pm.logger.Debugf("Pod %s age: %v, max age: %v", pod.Name, age, pm.config.Watchdog.MaxPodLifetime)
+			isOld, err := ager.IsOld(pod)
+			if err != nil {
+				logger_pod.Warnw("Unable to calculate pod age", "pod", pod.Name, "err", err)
+				continue
+			}
+			if !isOld {
+				continue
+			}
 
-			// Check if the pod exceeds the maximum lifetime
-			if age > pm.config.Watchdog.MaxPodLifetime {
-				pm.logger.Infow("Pod exceeds maximum lifetime",
-					"pod", pod.Name,
-					"namespace", namespace,
-					"age", age,
-					"maxAge", pm.config.Watchdog.MaxPodLifetime)
-
-				if pm.config.Watchdog.DryRun {
-					pm.logger.Infow("DRY RUN: Would terminate pod", "pod", pod.Name, "namespace", namespace)
-					PodsTerminatedTotal.WithLabelValues(namespace, "true").Inc()
+			if pm.config.Watchdog.DryRun {
+				logger_pod.Infow("DRY RUN: Would terminate pod")
+				PodsTerminatedTotal.WithLabelValues(namespace, "true").Inc()
+			} else {
+				// Terminate the pod
+				err := pm.terminatePod(namespace, pod.Name)
+				if err != nil {
+					logger_pod.Errorw("Failed to terminate pod", "error", err)
 				} else {
-					// Terminate the pod
-					err := pm.terminatePod(namespace, pod.Name)
-					if err != nil {
-						pm.logger.Errorw("Failed to terminate pod", "pod", pod.Name, "namespace", namespace, "error", err)
-					} else {
-						pm.logger.Infow("Successfully terminated pod", "pod", pod.Name, "namespace", namespace)
-						PodsTerminatedTotal.WithLabelValues(namespace, "false").Inc()
-						PodsTerminatedByAgeTotal.WithLabelValues(namespace).Inc()
-					}
+					logger_pod.Infow("Successfully terminated pod")
+					PodsTerminatedTotal.WithLabelValues(namespace, "false").Inc()
+					PodsTerminatedByAgeTotal.WithLabelValues(namespace).Inc()
 				}
 			}
 		}
