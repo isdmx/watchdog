@@ -55,14 +55,13 @@ func TestCreationAger(t *testing.T) {
 				require.ErrorIs(t, err, tt.expectedErr)
 			}
 			require.Equal(t, tt.expected, res)
-
 		})
 	}
 }
 
 func TestLabeledAger(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	ager := NewLabeledAger("sandbox.kill_time", time.Hour*2, logger.Sugar()) //zap.NewNop().Sugar())
+	ager := NewLabeledAger("sandbox.kill_time", time.Hour*2, logger.Sugar()) // zap.NewNop().Sugar())
 	tests := []struct {
 		name        string
 		pod         k8type.Pod
@@ -170,7 +169,6 @@ func TestLabeledAger(t *testing.T) {
 				require.NoError(t, err)
 			}
 			require.Equal(t, tt.expected, res)
-
 		})
 	}
 }

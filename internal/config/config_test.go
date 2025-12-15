@@ -127,7 +127,7 @@ func TestConfigDefaults(t *testing.T) {
 	require.Equal(t, defaultWriteTimeout, config.HTTP.WriteTimeout)
 	require.Equal(t, defaultScheduleInterval, config.Watchdog.ScheduleInterval)
 	require.Equal(t, defaultMaxPodLifetime, config.Watchdog.MaxPodLifetime)
-	require.Equal(t, "", config.Watchdog.TtlLabel)
+	require.Empty(t, config.Watchdog.TtlLabel)
 	require.Equal(t, defaultDryRun, config.Watchdog.DryRun)
 	require.Equal(t, defaultLogMode, config.Logging.Mode)
 	require.Equal(t, defaultLogLevel, config.Logging.Level)

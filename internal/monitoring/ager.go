@@ -90,9 +90,9 @@ func NewLabeledAger(labelKillTime string, maxPodLifetime time.Duration, logger *
 	}
 }
 
-func NewAgerFromConfig(config *config.WatchdogConfig, logger *zap.SugaredLogger) Ager {
-	if config.TtlLabel == "" {
-		return NewCreationAger(config.MaxPodLifetime, logger)
+func NewAgerFromConfig(cfg *config.WatchdogConfig, logger *zap.SugaredLogger) Ager {
+	if cfg.TtlLabel == "" {
+		return NewCreationAger(cfg.MaxPodLifetime, logger)
 	}
-	return NewLabeledAger(config.TtlLabel, config.MaxPodLifetime, logger)
+	return NewLabeledAger(cfg.TtlLabel, cfg.MaxPodLifetime, logger)
 }
