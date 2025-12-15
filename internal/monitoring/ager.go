@@ -24,14 +24,16 @@ type CreationAger struct {
 }
 
 func (a *CreationAger) IsOld(pod *k8type.Pod) (bool, error) {
+	logger := a.logger.With("pod", pod.Name, "namespace", pod.Namespace)
+
 	age := time.Since(pod.CreationTimestamp.Time)
-	a.logger.Debugf("Pod %s age: %v, max age: %v", pod.Name, age, a.maxPodLifetime)
+	logger.Debugf("Pod %s age: %v, max age: %v", pod.Name, age, a.maxPodLifetime)
 
 	if age <= a.maxPodLifetime {
 		return false, nil
 	}
 
-	a.logger.Infow("Pod exceeds maximum lifetime",
+	logger.Infow("Pod exceeds maximum lifetime",
 		"age", age,
 		"maxAge", a.maxPodLifetime,
 	)
@@ -74,7 +76,7 @@ func (a *LabeledAger) IsOld(pod *k8type.Pod) (bool, error) {
 		return false, err
 	}
 	if killTime <= float64(time.Now().Unix()) {
-		logger.Infow("Killing pod by TTL", "kill_time", killTime, "now", float64(time.Now().Unix()))
+		logger.Infow("Killing pod by TTL", "kill_time", killTime)
 		return true, nil
 	}
 	return false, nil
