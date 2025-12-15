@@ -26,6 +26,7 @@ type WatchdogConfig struct {
 	LabelSelectors   map[string]string `mapstructure:"labelSelectors"`
 	ScheduleInterval time.Duration     `mapstructure:"scheduleInterval"`
 	MaxPodLifetime   time.Duration     `mapstructure:"maxPodLifetime"`
+	TtlLabel         string            `mapstructure:"ttlLabel"`
 	DryRun           bool              `mapstructure:"dryRun"`
 }
 
@@ -48,20 +49,21 @@ const (
 
 // NewConfig loads the configuration from the config file
 func NewConfig() (*Config, error) {
+	viper.SetOptions(viper.KeyDelimiter("::")) // because labelSelectors may contain `.`
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("config")
 
 	// Set default values
-	viper.SetDefault("http.addr", defaultHTTPAddr)
-	viper.SetDefault("http.readTimeout", defaultReadTimeout)
-	viper.SetDefault("http.writeTimeout", defaultWriteTimeout)
-	viper.SetDefault("watchdog.scheduleInterval", defaultScheduleInterval)
-	viper.SetDefault("watchdog.maxPodLifetime", defaultMaxPodLifetime)
-	viper.SetDefault("watchdog.dryRun", defaultDryRun)
-	viper.SetDefault("logging.mode", defaultLogMode)
-	viper.SetDefault("logging.level", defaultLogLevel)
+	viper.SetDefault("http::addr", defaultHTTPAddr)
+	viper.SetDefault("http::readTimeout", defaultReadTimeout)
+	viper.SetDefault("http::writeTimeout", defaultWriteTimeout)
+	viper.SetDefault("watchdog::scheduleInterval", defaultScheduleInterval)
+	viper.SetDefault("watchdog::maxPodLifetime", defaultMaxPodLifetime)
+	viper.SetDefault("watchdog::dryRun", defaultDryRun)
+	viper.SetDefault("logging::mode", defaultLogMode)
+	viper.SetDefault("logging::level", defaultLogLevel)
 
 	// Read the config file
 	if err := viper.ReadInConfig(); err != nil {

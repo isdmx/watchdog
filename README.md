@@ -47,6 +47,11 @@ watchdog:
   # Maximum pod lifetime before cleanup consideration
   maxPodLifetime: "24h"
 
+  # Custom label in k8s with kill time in Unix Time format, "1765807309"
+  # will be used WITH maxPodLifetime if present.
+  # Optional
+  ttlLabel: "sandbox.kill_time"
+
   # Additional safety settings
   dryRun: false  # If true, only log what would be deleted without taking action
 
